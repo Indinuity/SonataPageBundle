@@ -2,9 +2,32 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [3.5.1](https://github.com/sonata-project/SonataPageBundle/compare/3.5.0...3.5.1) - 2017-07-05
+### Fixed
+- use FQCN for Symfony 3 for `type` in `PageAdmin`
+- parent page select input no longer has flipped choices
+- crash when running `sonata:page:clone-site`
+- form typess are referenced by FQCN and not by name, which is no longer supported
+
+## [3.5.0](https://github.com/sonata-project/SonataPageBundle/compare/3.4.1...3.5.0) - 2017-06-05
+### Added
+- added support for `FOSRestBundle:2.0`
+- Added Italian translations
+
+### Fixed
+- Rendering failure when block.page property does not exist.
+- Fixed hardcoded paths to classes in `.xml.skeleton` files of config
+- Compatibility with Symfony 3 was fixed
+- A deprecation warning regarding the usage of factories in the DIC was fixed
+- deprecation warning about scope attributes
+- deprecation error message about `addViolationAt`
+- added support for both `QuestionHelper` and `DialogHelper` in `CreateSiteCommand` for Symfony 2.3 and 3.x compatibility
+- fixed token manager compatibility in `PageAdminController`
+- fixed the syntax change necessary for question helper as opposed to dialog helper
+
 ## [3.4.1](https://github.com/sonata-project/SonataPageBundle/compare/3.4.0...3.4.1) - 2017-04-04
 ### Deprecated
- - Removed block service deprecation
+- Removed block service deprecation
 
 ### Fixed
 - use `is not null` instead of `is defined` in `Block/block_base.html.twig`
