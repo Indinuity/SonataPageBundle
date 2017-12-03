@@ -17,39 +17,41 @@
         }
     ],
     "require": {
-        "php": "^5.3 || ^7.0",
-        "symfony/config": "^2.3.9",
-        "symfony/console": "^2.3",
-        "symfony/debug": "^2.3",
-        "symfony/dependency-injection": "^2.3.3",
-        "symfony/form": "^2.3.5",
-        "symfony/http-foundation": "^2.3",
-        "symfony/http-kernel": "^2.3",
-        "symfony/options-resolver": "^2.3",
-        "symfony/process": "^2.3.5",
-        "symfony/routing": "^2.3",
-        "symfony/security": "^2.3",
-        "symfony/templating": "^2.3",
-        "symfony/validator": "^2.3",
+        "php": "^5.6 || ^7.0",
+        "cocur/slugify": "^1.0 || ^2.0",
         "sonata-project/admin-bundle": "^3.4",
-        "sonata-project/block-bundle": "^3.1.1",
-        "sonata-project/seo-bundle": "^2.0",
-        "sonata-project/doctrine-extensions" : "^1.0",
-        "sonata-project/cache-bundle": "^2.1.7",
+        "sonata-project/block-bundle": "^3.3.1",
         "sonata-project/cache": "^1.0.2",
+        "sonata-project/cache-bundle": "^2.1.7",
         "sonata-project/core-bundle": "^3.0",
-        "symfony-cmf/routing-bundle": "^1.1",
-        "sonata-project/notification-bundle": "^3.0",
         "sonata-project/datagrid-bundle": "^2.2",
-        "cocur/slugify": "^1.0 || ^2.0"
+        "sonata-project/doctrine-extensions": "^1.0",
+        "sonata-project/easy-extends-bundle": "^2.2",
+        "sonata-project/notification-bundle": "^3.0",
+        "sonata-project/seo-bundle": "^2.0",
+        "symfony-cmf/routing-bundle": "^1.1 || ^2.0",
+        "symfony/config": "^2.8 || ^3.2",
+        "symfony/console": "^2.8 || ^3.2",
+        "symfony/debug": "^2.8 || ^3.2",
+        "symfony/dependency-injection": "^2.8 || ^3.2",
+        "symfony/form": "^2.8 || ^3.2",
+        "symfony/http-foundation": "^2.8 || ^3.2",
+        "symfony/http-kernel": "^2.8 || ^3.2",
+        "symfony/options-resolver": "^2.8 || ^3.2",
+        "symfony/process": "^2.8 || ^3.2",
+        "symfony/routing": "^2.8 || ^3.2",
+        "symfony/security": "^2.8 || ^3.2",
+        "symfony/templating": "^2.8 || ^3.2",
+        "symfony/validator": "^2.8 || ^3.2"
     },
     "require-dev": {
-        "sllh/php-cs-fixer-styleci-bridge": "^2.0",
-        "sonata-project/doctrine-orm-admin-bundle": "^3.0",
-        "symfony/phpunit-bridge": "^2.7 || ^3.0",
         "friendsofsymfony/rest-bundle": "^1.1",
         "jms/serializer-bundle": "^0.13 || ^1.0",
-        "nelmio/api-doc-bundle": "^2.4"
+        "matthiasnoback/symfony-dependency-injection-test": "^1.1.0",
+        "nelmio/api-doc-bundle": "^2.4",
+        "sllh/php-cs-fixer-styleci-bridge": "^2.0",
+        "sonata-project/doctrine-orm-admin-bundle": "^3.0",
+        "symfony/phpunit-bridge": "^3.3"
     },
     "conflict": {
         "jms/serializer": "<0.13",
@@ -59,13 +61,13 @@
         "sonata-project/doctrine-orm-admin-bundle": "^2.2"
     },
     "autoload": {
-        "psr-4": { "Sonata\\PageBundle\\": "" },
-        "exclude-from-classmap": [
-            "Tests/"
-        ]
+        "psr-4": { "Sonata\\PageBundle\\": "src/" }
     },
     "autoload-dev": {
-        "psr-4": { "Sonata\\PageBundle\\Tests\\": "Tests/" }
+        "psr-4": { "Sonata\\PageBundle\\Tests\\": "tests/" }
+    },
+    "config": {
+        "sort-packages": true
     },
     "extra": {
         "branch-alias": {

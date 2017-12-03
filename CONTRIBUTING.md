@@ -2,11 +2,13 @@
 
 Thanks for your interest in Sonata projects!
 
+This document is about issues and pull requests.
+
 ## Summary
 
 * [Issues](#issues)
 * [Pull Requests](#pull-requests)
-* [Label rules]()
+* [Code Reviews](#code-reviews)
 
 ## Issues
 
@@ -72,9 +74,29 @@ php-cs-fixer fix --verbose
 
 #### The documentation
 
-The documentation is mostly written with the `rst` format. You can test the doc rendering with the `make docs` command.
+The documentation is mostly written with the `rst` format, and can be found in the `docs` directory.
+You can test the doc rendering with the `make docs` command, but to do this, you will need [Sphinx][sphinx_install].
+Just like php dependencies can be managed with Composer, python dependencies can be managed with [pip][pip_install].
+To get sphinx, simply run the following command.
+
+```bash
+pip install --requirement docs/requirements.txt --user
+```
+
+Some python binaries should be downloaded to `~/.local/bin` for Linux or `~/Library/Python/2.7/bin` for Mac OS,
+[modify your `$PATH` environment variable](http://www.linfo.org/path_env_var.html)
+so that it contains this path and then, from the root of the project, run `make docs`
+
+If `make docs` is successful, you should be able to see your modifications:
+
+```bash
+$YOUR_FAVORITE_BROWSER docs/_build/html/index.html
+```
 
 If your PR contains a new feature, you must add documentation for it.
+Of course, you can also create PRs consisting only in documentation changes.
+
+Documentation contributions should comply with [the Symfony documentation standards][sf_docs_standards].
 
 #### The tests
 
@@ -91,11 +113,29 @@ Some rules have to be respected about the test:
   * `@codeCoverageIgnore`
   * `@codeCoverageIgnoreStart`
   * `@codeCoverageIgnoreEnd`
-* All test methods should be prefixed by `test`. Example: `public function testItReturnsNull()`.
-* All test method names must be in camel case format.
+* All test methods must be prefixed by `test`. Example: `public function testItReturnsNull()`.
 * As opposed, the `@test` annotation is prohibited.
+* All test method names must be in camel case format.
 * Most of the time, the test class should have the same name as the targeted class, suffixed by `Test`.
 * The `@expectedException*` annotations are prohibited. Use `PHPUnit_Framework_TestCase::setExpectedException()`.
+
+##### Using test doubles
+
+Since version 4.5, PHPUnit requires and [integrates](https://phpunit.de/manual/current/en/test-doubles.html#test-doubles.prophecy)
+the [phpspec/prophecy](https://github.com/phpspec/prophecy).
+Historically, Sonata has been using [the built-in test doubles implementation](https://phpunit.de/manual/current/en/test-doubles.html),
+but [has decided to move to Prophecy](https://github.com/sonata-project/dev-kit/issues/89),
+which is more concise than its built-in counterpart is most cases.
+This means the current Sonata codebase currently uses both implementations.
+If you want to contribute a test that uses test doubles, please follow these rules :
+
+1. All new test classes MUST use Prophecy.
+2. If you are changing an existing test method, you MUST use the same implementation it already uses,
+and focus on the goal of your PR and only on that.
+3. If you are changing an existing test class, you MUST use the same implementation it already uses,
+to be more consistent.
+4. You MAY submit a PR that migrates a test class from the built-in test double implementation to Prophecy,
+but it must migrate it entirely. The PR should only be about the migration.
 
 ### Writing a Pull Request
 
@@ -192,8 +232,62 @@ interface BarInterface
 }
 ```
 
-In some cases, you will have the possibility to warn the user that things will change,
-and recommend a new way of doing things. You can do so by triggering the dedicated kind of error, like this:
+##### Deprecation
+
+In some cases, you might have some code parts that might become superseded by others, but could still be used by the end user.
+If the concerned code is not tagged as `internal`, it must be deprecated on the stable branch, then removed.
+
+If an alternate usage solution is possible, you **MUST** provide it in the deprecation message.
+
+The deprecated minor version **MUST NOT** be provided. Use `x` instead. It will be updated when releasing.
+
+Any deprecation **MUST** be documented in the corresponding `UPGRADE-[0-9].x.md`.
+The documentation **MUST** be filled inside the top **unreleased** section with a sub title.
+
+The `NEXT_MAJOR` tag should not be used for deprecation.
+The `@deprecated` and `E_USER_DEPRECATED` key will be searched for before releasing the next major version.
+
+You have three ways to deprecate things.
+
+For class definitions, methods (or first level functions) and properties, use the `@deprecated` tag: 
+
+```php
+/**
+ * @deprecated since 42.x, to be removed in 43.0. Use Shiny\New\ClassOfTheMonth instead.
+ */
+final class IAmOldAndUseless
+{
+}
+
+final class StillUsedClass
+{
+    /**
+     * @deprecated since 42.x, to be removed in 43.0.
+     */
+    public $butNotThisProperty;
+
+    /**
+     * @deprecated since 42.x, to be removed in 43.0.
+     */
+    public function iAmBatman()
+    {
+        echo "But this is not Gotham here.";
+    }
+}
+```
+
+If the deprecated thing is a service, you **MUST** specify it on the service definition:
+
+```xml
+<service id="sonata.block.old" class="Sonata\Block\Old">
+    <argument type="service" id="security.token_storage" />
+    <deprecated>The "%service_id%" service is deprecated since 42.x and will be removed in 43.0.</deprecated>
+ </service>
+ ```
+
+More info: http://symfony.com/blog/new-in-symfony-2-8-deprecated-service-definitions
+
+For everything else, not managed by the `@deprecated` tag, you **MUST** trigger a deprecation message.
 
 ```php
 <?php
@@ -208,28 +302,39 @@ if (/* some condition showing the user is using the legacy way */) {
 }
 ```
 
-Additionally, and when applicable, you must use the `@deprecated` tag on classes or methods you wish to deprecate,
-along with a message directed at the end user (as opposed to other contributors).
+Note that the `trigger_error` usage is not necessary if the `@deprecated` tag is used.
 
-
-```php
-/**
- * NEXT_MAJOR: remove this method
- *
- * @deprecated since 3.x, to be removed in 4.0. Use Foo::bar instead.
- */
-public function baz()
-{
-}
-```
-
-In that case, unit tests might show your deprecation notice. You must mark such tests with the `@group legacy` annotation,
-and if need be, isolate them in a new test method that can simply be removed in the non-BC PR.
+In the case of a deprecation, unit tests might show your deprecation notice.
+You **MUST** mark such tests with the `@group legacy` annotation and if need be,
+isolate them in a new test method that can simply be removed in the non-BC PR.
 
 Be aware that pull requests with BC breaks could be rejected
-or postponed to next major release if BC is not possible.
+or postponed to next major release **only** if BC is not possible.
 
 If you are not sure what should be done, don't hesitate to open an issue about your PR project.
+
+##### Dependency changes
+
+If you want to change some dependencies, here are the rules:
+
+- Don't add support for a version lower than the current one.
+- Don't change the highest supported version to a lower one.
+- Lower version dropping is accepted as a Backward Compatible change according to [semver][semver_dependencies_update],
+but some extra rules must be respected here:
+  - PHP versions that are under the [orange zone][php_supported_versions] (Security Support) **MUST NOT** be dropped on the stable branch.
+  - PHP versions that are under the [green zone][php_supported_versions] (Active Support) **MUST NOT** be dropped on the master branch.
+  - If it's a Symfony package, at least the last LTS version **MUST** be supported, even on master.
+  - Generally, don't drop dependency version it it doesn't have a big impact on the code.
+  - Backward Compatible code related to the dropped version **MUST** be dropped on the same PR.
+    This will allow to see if this version drop **is really worth it** or not.
+    Please note that we can refuse a version drop at any moment if the gain does not seem sufficient.
+
+##### Legacy branches
+
+Legacy branches are **NOT** supported at all. Any submitted Pull Request will be immediately closed.
+
+Core team members *may* cherry-pick some fixes from the stable branch to the legacy one if it's really needed
+and if the legacy one is not too old (~less than one month).
 
 #### The commit message
 
@@ -299,3 +404,102 @@ This is a consensus made on #4242 in addition to #1337.
 We agreed that blank color is boring and so deja vu. Pink is the new way to do.
 ```
 (Obviously, this commit is fake. :wink:)
+
+## Code Reviews
+
+Grooming a PR until it is ready to get merged is a contribution by itself.
+Indeed, why contribute a PR if there are hundreds of PRs already waiting to get reviewed and hopefully, merged?
+By taking up this task, you will try to speed up this process by making sure the merge can be made with peace of mind.
+
+### Commenting on a PR
+
+Before doing anything refrain to dive head-first in the details of the PR and try to see the big picture,
+to understand the subject of the PR. If the PR fixes an issue, read the issue first.
+This is to avoid the pain of making a reviewer rework their whole PR and then not merging it.
+
+Things to hunt for :
+
+- missing docs . This is what you should look for first. If you think the PR lacks docs,
+ask for them, because you will be better at reviewing it if you understand it better,
+and docs help a lot with that.
+- missing tests : Encourage people to do TDD by making clear a PR will not get merged
+if it lacks tests. Not everything is easy to test though, keep that in mind.
+- BC breaks : If there is a BC-break, ask for a deprecation system to be created instead,
+and make sure the `master` branch is used.
+- Unclear pieces of code : does the code use clear, appropriate variable or class names,
+or does it use names like `data`, `result`, `WhateverManager`, `SomethingService`?
+Are exception names still meaningful if you remove the `Exception` suffix? Do all
+exceptions have a custom message?
+Is the contributor trying to be clever or to be clear?
+- Violations of the [SOLID][solid] principles :
+    - S : If a class is 3000 lines long, maybe it does too many things?
+    - O : Is there a big switch statement that might grow in the future?
+    - L : Does the program behave reasonably when replacing a class with a child class?
+    - I : Are interfaces small and easy to implement? If not, can they be split into smaller interfaces?
+    - D : Is the name of a class hardcoded in another class, with the `new` keyword or a static call?
+- Spelling / grammar mistakes, including in commit messages or UPGRADE / CHANGELOG notes.
+- Dependency modifications : is anything new introduced, if yes is it worth it?
+
+[solid]: https://en.wikipedia.org/wiki/SOLID_(object-oriented_design)
+
+Leave no stone unturned. When in doubt, ask for a clarification. If the
+clarification seems useful, and does not appear in a code comment or in a commit
+message, say so and / or make use a squash-merge to customize the commit message.
+Ideally, the project history should be understandable without an internet connection,
+and the PR should be understandable without having a look at the changes.
+
+Also, make sure your feedback is actionable, it is important to keep the ball rolling,
+so if you raise a question, try to also provide solutions.
+
+### Labelling the PR
+
+Applying labels requires write access to PRs, but you can still advise if you do not have them.
+There are several labels that will help determine what the next version number will be.
+Apply the first label that matches one of this conditions, in that order:
+
+- `major`: there is a BC-break. The PR should target the `master` branch.
+- `minor`: there is a backwards-compatible change in the API. The PR should target the stable branch.
+- `patch`: this fixes an issue (not necessarily reported). The PR should target the stable branch.
+- `docs`: this PR is solely about the docs. `pedantic` is implied.
+- `pedantic`: this change does not warrant a release.
+
+Also if you see that the PR lacks documentation, tests, a changelog note,
+or an upgrade note, use the appropriate label.
+
+### Reviewing PRs with several commits
+
+If there are several commits in a PR, make sure you review it commit by commit,
+so that you can check the commit messages, and make sure the commit are independent
+and atomic.
+
+### Merging
+
+Do not merge something you wrote yourself. Do not merge a PR you reviewed alone,
+instead, merge PRs that have already be reviewed and approved by another reviewer.
+If the commit history is unclear or irrelevant, prefer the "Squash and merge" feature, otherwise, always
+use the "Rebase and merge" feature.
+And finally, use your common sense : if you see a PR about a typo,
+or if there is a situation (faulty commit, revert needed) maybe you can merge it directly.
+
+#### Dependencies version dropping
+
+Do not merge any merge request dropping a dependency version support.
+To achieve that, mark them as `RTM`, and mention then on Slack when asking for a release.
+
+This rule should be applied for these reasons:
+
+- Even if it's semver compatible, we don't maintain minor branches.
+So it's preferable to give priority to bugfixes over version-dropping PRs.
+- Some dependencies need a dev-kit update. By the way, you can make a PR on dev-kit and link it to your own.
+
+### Be nice to the contributor
+
+Thank them for contributing. Encourage them if you feel this is going to be long.
+In short, try to make them want to contribute again. If they are stuck, try to provide them with
+code yourself, or ping someone who can help.
+
+[sphinx_install]: http://www.sphinx-doc.org/en/stable/
+[pip_install]: https://pip.pypa.io/en/stable/installing/
+[sf_docs_standards]: https://symfony.com/doc/current/contributing/documentation/standards.html
+[semver_dependencies_update]: http://semver.org/#what-should-i-do-if-i-update-my-own-dependencies-without-changing-the-public-api
+[php_supported_versions]: http://php.net/supported-versions.php
